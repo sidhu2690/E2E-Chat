@@ -75,5 +75,6 @@ Contributions are welcome to enhance security and functionality! To contribute:
 
 License
 This project is licensed under the MIT License. See the LICENSE file for details.
-![Visitor Count](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/sidhu2690/E2E-Chat/&title=Visitor%20Count&edge_flat=true)
+
+![Visitor Count](https://profile-counter.glitch.me/sidhu2690/E2E-Chat/count.svg)
 
