@@ -1,17 +1,17 @@
-# E2E Chat
-E2E Chat is a peer-to-peer chat application built with PeerJS and WebRTC, designed for secure, end-to-end (E2E) encrypted messaging between two users. It allows one user to create a chat room and another to join it, with no server-side storage or access to message content beyond connection setup. The application uses Tailwind CSS for a clean, responsive interface.
+E2E-Chat
+E2E-Chat is a secure, peer-to-peer chat application built with PeerJS and WebRTC, designed for end-to-end (E2E) encrypted messaging and file sharing between two users. One user creates a chat room, another joins, and they communicate directly with no server storing their data. The app features a clean, responsive interface using Tailwind CSS.
 Features
 
-E2E Encrypted Messaging: Messages are encrypted using WebRTC's DTLS and SRTP protocols, ensuring only the two connected users can read them.
-Two-User Communication: Supports one host and one participant per room for private, direct messaging.
-Minimal Server Role: The PeerJS signaling server only facilitates connection setup (exchanging metadata like IP addresses) and cannot access message content.
+E2E Encrypted Messaging: Messages are secured with WebRTC’s DTLS and SRTP protocols, ensuring only the two connected users can read them.
+E2E Encrypted File Sharing: Send images, PDFs, or other files securely with WebRTC encryption.
+Two-User Limit: Only two users can connect per room, blocking third-party intrusions even if the room name is guessed or brute-forced.
+Minimal Server Role: The PeerJS signaling server only sets up the initial connection (exchanging metadata like IP addresses) and then has no further involvement.
+No Server Attacks: Serverless design prevents SQL injection and similar attacks.
+XSS Protection: Input sanitization blocks cross-site scripting (XSS) attacks.
 Responsive Design: Built with Tailwind CSS for a modern, mobile-friendly UI.
 
-## Demo
-Try it out here:
-https://sidhu2690.github.io/E2E-Chat/
-
-
+Demo
+Try it out here: https://sidhu2690.github.io/E2E-Chat/
 Prerequisites
 
 A modern web browser (e.g., Chrome, Firefox, Edge) with WebRTC support.
@@ -19,61 +19,58 @@ Internet connection for accessing the PeerJS signaling server.
 
 Setup
 
-Clone the Repository:git clone https://github.com/sidh2690/E2E-Chat.git
+Clone the repository:git clone https://github.com/sidhu2690/E2E-Chat.git
 cd E2E-Chat
 
 
+Open index.html in a browser or host it on a secure web server (must use HTTPS for WebRTC compatibility).
 
 Usage
+Open the Application
+Access the hosted app via a secure web server (HTTPS required for WebRTC).
+Create a Room (Host)
 
-Open the Application:
-
-Access the hosted app via a secure web server (must use HTTPS for WebRTC compatibility).
-
-
-Create a Room (Host):
-
-Enter a unique room name (e.g., room1234) in the input field.
+Enter a unique room name (e.g., room-x7b9p3q8r2) in the input field.
 Click Create Room to host a new chat room.
-Share the room name privately with the intended recipient (e.g., via a secure channel like email or encrypted messaging).
+Share the room name privately with your friend (e.g., via a secure channel like Signal or WhatsApp).
 
-
-Join a Room (Participant):
+Join a Room (Participant)
 
 Enter the room name provided by the host.
-Click Join Room to connect to the host's room.
+Click Join Room to connect directly to the host via WebRTC.
 
-
-Chat:
+Chat and Share Files
 
 Once connected, type messages in the input field and click Send or press Enter.
-Messages appear in the chat window, with your messages on the right and the other user's on the left.
-Only the two connected users can send and receive messages in the room.
+To share a file, click the 📎 button, select a file (e.g., image or PDF), and send it.
+Messages and files appear in the chat window, with your messages on the right and the other user’s on the left.
+Only the two connected users can send and receive messages or files.
 
+How File Sharing Works
 
+Upload: Click the 📎 button to select a file.
+Transfer: The file is split into chunks, encrypted with WebRTC’s DTLS protocol, and sent directly to the other user.
+Receive: Files appear in the chat for viewing or downloading, fully encrypted.
 
 Security
-E2E Chat is designed for E2E secure messaging with minimal server involvement:
+E2E-Chat is built for secure, private communication with minimal server involvement:
 
-End-to-End Encryption: Messages are encrypted using WebRTC's DTLS for key exchange and SRTP for data transfer. Only the two connected users can decrypt and read the messages.
-Signaling Server Role: The PeerJS signaling server facilitates connection setup by exchanging metadata (e.g., room names, IP addresses). It cannot access or store message content.
-Current Limitations:
-XSS Vulnerability: User messages are not sanitized, potentially allowing malicious code execution. Do not use in production without fixing this (see Contributing).
-No Room Authentication: Anyone with the room name can join. Use strong, unique room names and share them securely.
-Metadata Exposure: The signaling server can see room names and IP addresses, though message content remains E2E encrypted.
+End-to-End Encryption: Messages and files are encrypted using WebRTC’s DTLS for key exchange and SRTP for data transfer. Only the two connected users can decrypt them.
+Server Only for Setup: The PeerJS signaling server facilitates connection setup (exchanging room names and IP addresses) and then steps out completely. It cannot access or store messages or files.
+Two-User Lock: Only two users can connect per room. If a third party tries to join (even with the correct room name), they’re blocked, preventing intrusions.
+No Server Storage: With no server-side data storage, attacks like SQL injection are impossible.
+XSS Protection: User inputs are sanitized to prevent cross-site scripting (XSS) attacks.
+Metadata Exposure: The signaling server can see room names and IP addresses, but message and file content remains E2E encrypted.
 
+Recommendations for Secure Use
 
-Recommendations for Secure Use:
-Share room names only through secure channels (e.g., encrypted messaging apps).
-Use long, random room names to prevent guessing (e.g., room-x7b9p3q8r2).
-
+Share room names only through secure channels (e.g., encrypted messaging apps like Signal).
+Use long, random room names (10+ characters, e.g., room-x7b9p3q8r2) to prevent guessing or brute-forcing.
 
 
 Contributing
-Contributions are welcome to enhance security and functionality! To contribute:
-
+Contributions are welcome to improve security and features! To contribute:
 
 License
-This project is licensed under the MIT License. See the LICENSE file for details.
-
-
+This project is licensed under the MIT License. 
+See the LICENSE file for details.
