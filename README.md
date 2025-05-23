@@ -10,14 +10,14 @@ No Server Attacks: Serverless design prevents SQL injection and similar attacks.
 XSS Protection: Input sanitisation blocks cross-site scripting (XSS) attacks.
 Responsive Design: Built with Tailwind CSS for a modern, mobile-friendly UI.
 
-Demo
+## Demo
 Try it out here: https://sidhu2690.github.io/E2E-Chat/
-Prerequisites
+### Prerequisites
 
 A modern web browser (e.g., Chrome, Firefox, Edge) with WebRTC support.
 Internet connection for accessing the PeerJS signalling server.
 
-Setup
+### Setup
 
 Clone the repository: git clone https://github.com/sidhu2690/E2E-Chat.git
 cd E2E-Chat
@@ -25,7 +25,7 @@ cd E2E-Chat
 
 Open index.html in a browser or host it on a secure web server (must use HTTPS for WebRTC compatibility).
 
-Usage
+### Usage
 Open the Application
 Access the hosted app via a secure web server (HTTPS required for WebRTC).
 Create a Room (Host)
@@ -46,7 +46,7 @@ To share a file, click the 📎 button, select a file (e.g., image or PDF), and 
 Messages and files appear in the chat window, with your messages on the right and the other user’s on the left.
 Only the two connected users can send and receive messages or files.
 
-How File Sharing Works
+### How File Sharing Works
 
 Upload: Click the 📎 button to select a file.
 Transfer: The file is split into chunks, encrypted with WebRTC’s DTLS protocol, and sent directly to the other user.
