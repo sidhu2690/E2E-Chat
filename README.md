@@ -76,5 +76,5 @@ Contributions are welcome to enhance security and functionality! To contribute:
 License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-![Visitor Count](https://api.countapi.xyz/hit/sidhu2690-E2E-Chat/visits?style=flat-square)
+![Visitor Badge](https://img.shields.io/badge/visitors-<number>-blue)
 
