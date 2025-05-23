@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ChatSphere</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity:  Ascending branch
+
+System: Here's the enhanced version of your PeerJS chat application with a modern chat app design, Tailwind CSS styling, and a connecting animation. I've removed the connection details from the UI and replaced them with a user-friendly interface and a loading animation. The core PeerJS functionality remains unchanged.
+
+<xaiArtifact artifact_id="a21b3123-8375-4cc6-8a4b-7f3621889c1c" artifact_version_id="0c6cc556-ca20-4f45-bc07-adbe08ad379b" title="index.html" contentType="text/html">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ChatSphere</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .connecting::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 1.5s infinite;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden">
+    <div class="bg-emerald-600 p-4">
+      <h2 class="text-2xl font-bold text-white text-center">ChatSphere</h2>
+    </div>
+    
+    <div class="p-4" id="roomSection">
+      <input 
+        type="text" 
+        id="roomInput" 
+        placeholder="Enter room name (e.g., room1234)" 
+        class="w-full p-2 border rounded-md mb-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      />
+      <div class="flex space-x-2">
+        <button id="hostBtn" class="flex-1 bg-emerald-600 text-white py-2 rounded-md hover:bg-emerald-700 transition-colors">
+          Create Room
+        </button>
+        <button id="joinBtn" class="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors">
+          Join Room
+        </button>
+      </div>
+    </div>
+
+    <div id="connectingSection" class="hidden p-4 text-center">
+      <p class="text-gray-600 connecting">Connecting to room...</p>
+    </div>
+
+    <div id="chatSection" class="hidden">
+      <div id="chat" class="h-96 overflow-y-auto p-4 space-y-3 bg-gray-50"></div>
+      <div class="p-4 border-t">
+        <div class="flex space-x-2">
+          <input 
+            type="text" 
+            id="message" 
+            placeholder="Type a message" 
+            autocomplete="off" 
+            disabled 
+            class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          <button 
+            id="sendBtn" 
+            disabled 
+            class="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <script>
+    let peer = null;
+    let conn = null;
+
+    const roomInput = document.getElementById('roomInput');
+    const hostBtn = document.getElementById('hostBtn');
+    const joinBtn = document.getElementById('joinBtn');
+    const roomSection = document.getElementById('roomSection');
+    const connectingSection = document.getElementById('connectingSection');
+    const chatSection = document.getElementById('chatSection');
+    const chatDiv = document.getElementById('chat');
+    const messageInput = document.getElementById('message');
+    const sendBtn = document.getElementById('sendBtn');
+
+    function appendMessage(text, isSelf = false) {
+      const div = document.createElement('div');
+      div.className = `p-3 rounded-lg max-w-[80%] ${isSelf ? 'bg-emerald-100 ml-auto' : 'bg-gray-200 mr-auto'}`;
+      div.textContent = text;
+      chatDiv.appendChild(div);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    function showSection(section) {
+      roomSection.classList.add('hidden');
+      connectingSection.classList.add('hidden');
+      chatSection.classList.add('hidden');
+      section.classList.remove('hidden');
+    }
+
+    function reset() {
+      if (conn) conn.close();
+      if (peer) peer.destroy();
+      conn = null;
+      peer = null;
+      chatDiv.innerHTML = '';
+      messageInput.value = '';
+      messageInput.disabled = true;
+      sendBtn.disabled = true;
+      showSection(roomSection);
+    }
+
+    hostBtn.onclick = () => {
+      const room = roomInput.value.trim();
+      if (!room) return alert('Please enter a room name');
+      reset();
+      showSection(connectingSection);
+
+      peer = new Peer(room);
+
+      peer.on('open', () => {
+        showSection(chatSection);
+      });
+
+      peer.on('connection', connection => {
+        if (conn) {
+          connection.close();
+          return;
+        }
+        conn = connection;
+        setupConnection();
+      });
+
+      peer.on('error', err => {
+        alert('Error creating room: ' + err);
+        reset();
+      });
+    };
+
+    joinBtn.onclick = () => {
+      const room = roomInput.value.trim();
+      if (!room) return alert('Please enter a room name');
+      reset();
+      showSection(connectingSection);
+
+      peer = new Peer();
+
+      peer.on('open', () => {
+        conn = peer.connect(room);
+        conn.on('open', () => {
+          showSection(chatSection);
+          setupConnection();
+        });
+
+        conn.on('error', err => {
+          alert('Error joining room: ' + err);
+          reset();
+        });
+      });
+
+      peer.on('error', err => {
+        alert('Error: ' + err);
+        reset();
+      });
+    };
+
+    function setupConnection() {
+      messageInput.disabled = false;
+      sendBtn.disabled = false;
+
+      conn.on('data', data => {
+        appendMessage(data);
+      });
+
+      conn.on('close', () => {
+        alert('Connection lost');
+        reset();
+      });
+    }
+
+    sendBtn.onclick = () => {
+      const msg = messageInput.value.trim();
+      if (!msg) return;
+      if (conn && conn.open) {
+        conn.send(msg);
+        appendMessage(msg, true);
+        messageInput.value = '';
+      } else {
+        alert('Not connected');
+      }
+    };
+
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
