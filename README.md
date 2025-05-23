@@ -7,6 +7,11 @@ Two-User Communication: Supports one host and one participant per room for priva
 Minimal Server Role: The PeerJS signaling server only facilitates connection setup (exchanging metadata like IP addresses) and cannot access message content.
 Responsive Design: Built with Tailwind CSS for a modern, mobile-friendly UI.
 
+## Demo
+Try it out here:
+https://sidhu2690.github.io/E2E-Chat/
+
+
 Prerequisites
 
 A modern web browser (e.g., Chrome, Firefox, Edge) with WebRTC support.
