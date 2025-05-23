@@ -39,7 +39,7 @@ Join a Room (Participant)
 Enter the room name provided by the host.
 Click Join Room to connect directly to the host via WebRTC.
 
-** Chat and Share Files
+Chat and Share Files
 
 Once connected, type messages in the input field and click Send or press Enter.
 To share a file, click the 📎 button, select a file (e.g., image or PDF), and send it.
