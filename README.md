@@ -76,5 +76,4 @@ Contributions are welcome to enhance security and functionality! To contribute:
 License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-![Hits](https://hits.donaldzou.dev/badge.svg?url=https://github.com/sidhu2690/E2E-Chat)
 
