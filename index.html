@@ -27,19 +27,23 @@
     .emoji { height: 1em; width: 1em; vertical-align: middle; }
     .photo-preview { max-width: 200px; max-height: 200px; object-fit: cover; }
     #chatSection { max-width: 100%; margin: 0 auto; }
+    body {
+      font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
   <!-- Header -->
-  <header class="bg-emerald-600 p-4 flex items-center justify-center relative">
-    <h1 class="text-xl font-semibold text-white absolute left-1/2 transform -translate-x-1/2">E2E Chat</h1>
-    <button id="resetBtn" class="text-white hover:opacity-80 absolute left-4" title="Back to Rooms">
+  <header class="bg-emerald-600 p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-10">
+    <button id="resetBtn" class="text-white hover:opacity-80" title="Back to Rooms">
       ←
     </button>
+    <h1 class="text-xl font-semibold text-white">E2E Chat</h1>
+    <div></div>
   </header>
 
   <!-- Room Selection -->
-  <section id="roomSection" class="flex-grow flex items-center justify-center p-4">
+  <section id="roomSection" class="flex-grow flex items-center justify-center p-4 pt-16">
     <div class="w-full max-w-sm bg-white rounded-lg shadow-lg p-6">
       <input id="roomInput" placeholder="Room name (e.g., room1234)" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
       <div class="flex space-x-3">
@@ -50,12 +54,12 @@
   </section>
 
   <!-- Connecting -->
-  <section id="connectingSection" class="hidden flex-grow flex items-center justify-center p-4">
+  <section id="connectingSection" class="hidden flex-grow flex items-center justify-center p-4 pt-16">
     <p class="text-gray-600 connecting">Connecting...</p>
   </section>
 
   <!-- Chat -->
-  <section id="chatSection" class="hidden flex-grow flex flex-col max-w-4xl mx-auto">
+  <section id="chatSection" class="hidden flex-grow flex flex-col max-w-4xl mx-auto pt-16">
     <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-gray-100"></div>
     <div class="p-4 bg-white shadow-inner flex items-center justify-center space-x-2">
       <input id="message" type="text" placeholder="Type a message" autocomplete="off" disabled class="flex-1 p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 max-w-[60%] sm:max-w-[50%]" />
@@ -66,6 +70,12 @@
       <button id="sendBtn" disabled class="bg-emerald-600 text-white p-2 sm:p-3 rounded-full hover:bg-emerald-700">🎤</button>
     </div>
   </section>
+
+  <!-- Image Modal -->
+  <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <img id="modalImage" class="max-w-[90%] max-h-[90%]" />
+    <button id="closeModal" class="absolute top-4 right-4 text-white text-3xl">&times;</button>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
   <script>
@@ -89,6 +99,9 @@
     const fileBtn = document.getElementById('fileBtn');
     const cameraInput = document.getElementById('cameraInput');
     const cameraBtn = document.getElementById('cameraBtn');
+    const imageModal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const closeModal = document.getElementById('closeModal');
 
     // Initialize Twemoji
     twemoji.parse(document.body, {
@@ -168,7 +181,7 @@
         const img = document.createElement('img');
         img.src = fileData;
         img.alt = fileName;
-        img.className = 'photo-preview rounded-lg';
+        img.className = 'photo-preview rounded-lg cursor-pointer';
         bubble.appendChild(img);
       } else if (fileType.startsWith('audio/')) {
         const audio = document.createElement('audio');
@@ -362,6 +375,24 @@
       reader.readAsDataURL(file);
       cameraInput.value = '';
     };
+
+    // Image modal functionality
+    chatDiv.addEventListener('click', e => {
+      if (e.target.classList.contains('photo-preview')) {
+        modalImage.src = e.target.src;
+        imageModal.classList.remove('hidden');
+      }
+    });
+
+    closeModal.addEventListener('click', () => {
+      imageModal.classList.add('hidden');
+    });
+
+    imageModal.addEventListener('click', e => {
+      if (e.target === imageModal) {
+        imageModal.classList.add('hidden');
+      }
+    });
   </script>
 </body>
 </html>
