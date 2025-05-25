@@ -26,6 +26,7 @@
     #chat::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.2); border-radius: 2px; }
     .emoji { height: 1em; width: 1em; vertical-align: middle; }
     .photo-preview { max-width: 200px; max-height: 200px; object-fit: cover; }
+    #chatSection { max-width: 100%; margin: 0 auto; }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -54,15 +55,15 @@
   </section>
 
   <!-- Chat -->
-  <section id="chatSection" class="hidden flex-grow flex flex-col">
+  <section id="chatSection" class="hidden flex-grow flex flex-col max-w-4xl mx-auto">
     <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-gray-100"></div>
-    <div class="p-4 bg-white shadow-inner flex items-center space-x-2">
-      <input id="message" type="text" placeholder="Type a message" autocomplete="off" disabled class="flex-1 p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 max-w-[70%]" />
+    <div class="p-4 bg-white shadow-inner flex items-center justify-center space-x-2">
+      <input id="message" type="text" placeholder="Type a message" autocomplete="off" disabled class="flex-1 p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 max-w-[60%] sm:max-w-[50%]" />
       <input type="file" id="fileInput" accept="image/*" class="hidden" />
       <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" />
-      <button id="fileBtn" disabled class="bg-yellow-500 text-white p-3 rounded-full hover:bg-yellow-600">📎</button>
-      <button id="cameraBtn" disabled class="bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600">📷</button>
-      <button id="sendBtn" disabled class="bg-emerald-600 text-white p-3 rounded-full hover:bg-emerald-700">🎤</button>
+      <button id="fileBtn" disabled class="bg-yellow-500 text-white p-2 sm:p-3 rounded-full hover:bg-yellow-600">📎</button>
+      <button id="cameraBtn" disabled class="bg-blue-500 text-white p-2 sm:p-3 rounded-full hover:bg-blue-600">📷</button>
+      <button id="sendBtn" disabled class="bg-emerald-600 text-white p-2 sm:p-3 rounded-full hover:bg-emerald-700">🎤</button>
     </div>
   </section>
 
@@ -98,6 +99,32 @@
         style: 'height: 1em; width: 1em; vertical-align: middle;'
       })
     });
+
+    // Simple Caesar cipher encryption (shift by 3)
+    function encrypt(text) {
+      return text.split('').map(char => {
+        if (char >= 'a' && char <= 'z') {
+          return String.fromCharCode((char.charCodeAt(0) - 97 + 3) % 26 + 97);
+        } else if (char >= 'A' && char <= 'Z') {
+          return String.fromCharCode((char.charCodeAt(0) - 65 + 3) % 26 + 65);
+        } else {
+          return char;
+        }
+      }).join('');
+    }
+
+    // Simple Caesar cipher decryption (shift back by 3)
+    function decrypt(text) {
+      return text.split('').map(char => {
+        if (char >= 'a' && char <= 'z') {
+          return String.fromCharCode((char.charCodeAt(0) - 97 - 3 + 26) % 26 + 97);
+        } else if (char >= 'A' && char <= 'Z') {
+          return String.fromCharCode((char.charCodeAt(0) - 65 - 3 + 26) % 26 + 65);
+        } else {
+          return char;
+        }
+      }).join('');
+    }
 
     function appendMessage(text, isSelf = false, timestamp = '') {
       const container = document.createElement('div');
@@ -232,7 +259,8 @@
 
       conn.on('data', data => {
         if (data.type === 'message') {
-          appendMessage(data.text, false, data.timestamp);
+          const decryptedMsg = decrypt(data.text);
+          appendMessage(decryptedMsg, false, data.timestamp);
         } else if (data.type === 'file') {
           appendFile(data.fileData, data.fileName, data.fileType, false, data.timestamp);
         }
@@ -254,9 +282,10 @@
       if (!conn || !conn.open) return;
 
       if (msg) {
+        const encryptedMsg = encrypt(msg);
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        conn.send({ type: 'message', text: msg, timestamp });
-        appendMessage(msg, true, timestamp);
+        conn.send({ type: 'message', text: encryptedMsg, timestamp });
+        appendMessage(msg, true, timestamp); // Display original message for sender
         messageInput.value = '';
         sendBtn.innerHTML = '🎤';
       } else if (!isRecording) {
