@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>E2E Chat with Emoji, Photo, and Voice</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js"></script>
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .connecting::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 1.5s infinite;
+    }
+    #chat::-webkit-scrollbar { width: 4px; }
+    #chat::-webkit-scrollbar-track { background: transparent; }
+    #chat::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.2); border-radius: 2px; }
+    .emoji { height: 1em; width: 1em; vertical-align: middle; }
+    .photo-preview { max-width: 200px; max-height: 200px; object-fit: cover; }
+    #chatSection { max-width: 100%; margin: 0 auto; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="bg-emerald-600 p-4 flex items-center justify-center relative">
+    <h1 class="text-xl font-semibold text-white absolute left-1/2 transform -translate-x-1/2">E2E Chat</h1>
+    <button id="resetBtn" class="text-white hover:opacity-80 absolute left-4" title="Back to Rooms">
+      ←
+    </button>
+  </header>
+
+  <!-- Room Selection -->
+  <section id="roomSection" class="flex-grow flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white rounded-lg shadow-lg p-6">
+      <input id="roomInput" placeholder="Room name (e.g., room1234)" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+      <div class="flex space-x-3">
+        <button id="hostBtn" class="flex-1 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Create Room</button>
+        <button id="joinBtn" class="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Join Room</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Connecting -->
+  <section id="connectingSection" class="hidden flex-grow flex items-center justify-center p-4">
+    <p class="text-gray-600 connecting">Connecting...</p>
+  </section>
+
+  <!-- Chat -->
+  <section id="chatSection" class="hidden flex-grow flex flex-col max-w-4xl mx-auto">
+    <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-gray-100"></div>
+    <div class="p-4 bg-white shadow-inner flex items-center justify-center space-x-2">
+      <input id="message" type="text" placeholder="Type a message" autocomplete="off" disabled class="flex-1 p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 max-w-[60%] sm:max-w-[50%]" />
+      <input type="file" id="fileInput" accept="image/*" class="hidden" />
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" />
+      <button id="fileBtn" disabled class="bg-yellow-500 text-white p-2 sm:p-3 rounded-full hover:bg-yellow-600">📎</button>
+      <button id="cameraBtn" disabled class="bg-blue-500 text-white p-2 sm:p-3 rounded-full hover:bg-blue-600">📷</button>
+      <button id="sendBtn" disabled class="bg-emerald-600 text-white p-2 sm:p-3 rounded-full hover:bg-emerald-700">🎤</button>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <script>
+    let peer = null;
+    let conn = null;
+    let isRecording = false;
+    let mediaRecorder = null;
+    let stream = null;
+
+    const roomInput = document.getElementById('roomInput');
+    const hostBtn = document.getElementById('hostBtn');
+    const joinBtn = document.getElementById('joinBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const roomSection = document.getElementById('roomSection');
+    const connectingSection = document.getElementById('connectingSection');
+    const chatSection = document.getElementById('chatSection');
+    const chatDiv = document.getElementById('chat');
+    const messageInput = document.getElementById('message');
+    const sendBtn = document.getElementById('sendBtn');
+    const fileInput = document.getElementById('fileInput');
+    const fileBtn = document.getElementById('fileBtn');
+    const cameraInput = document.getElementById('cameraInput');
+    const cameraBtn = document.getElementById('cameraBtn');
+
+    // Initialize Twemoji
+    twemoji.parse(document.body, {
+      folder: 'svg',
+      ext: '.svg',
+      className: 'emoji',
+      attributes: () => ({
+        style: 'height: 1em; width: 1em; vertical-align: middle;'
+      })
+    });
+
+    // Simple Caesar cipher encryption (shift by 3)
+    function encrypt(text) {
+      return text.split('').map(char => {
+        if (char >= 'a' && char <= 'z') {
+          return String.fromCharCode((char.charCodeAt(0) - 97 + 3) % 26 + 97);
+        } else if (char >= 'A' && char <= 'Z') {
+          return String.fromCharCode((char.charCodeAt(0) - 65 + 3) % 26 + 65);
+        } else {
+          return char;
+        }
+      }).join('');
+    }
+
+    // Simple Caesar cipher decryption (shift back by 3)
+    function decrypt(text) {
+      return text.split('').map(char => {
+        if (char >= 'a' && char <= 'z') {
+          return String.fromCharCode((char.charCodeAt(0) - 97 - 3 + 26) % 26 + 97);
+        } else if (char >= 'A' && char <= 'Z') {
+          return String.fromCharCode((char.charCodeAt(0) - 65 - 3 + 26) % 26 + 65);
+        } else {
+          return char;
+        }
+      }).join('');
+    }
+
+    function appendMessage(text, isSelf = false, timestamp = '') {
+      const container = document.createElement('div');
+      container.className = 'flex';
+      if (isSelf) container.classList.add('justify-end');
+
+      const bubble = document.createElement('div');
+      bubble.className = 'max-w-[75%] p-3 rounded-lg break-words ' +
+        (isSelf ? 'bg-emerald-100 text-gray-800 rounded-br-none' : 'bg-white text-gray-900 rounded-bl-none shadow');
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'flex justify-between items-end';
+
+      const textDiv = document.createElement('div');
+      textDiv.textContent = text;
+      twemoji.parse(textDiv);
+      contentDiv.appendChild(textDiv);
+
+      if (timestamp) {
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'text-xs text-gray-500 ml-2';
+        timeSpan.textContent = timestamp;
+        contentDiv.appendChild(timeSpan);
+      }
+
+      bubble.appendChild(contentDiv);
+      container.appendChild(bubble);
+      chatDiv.appendChild(container);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    function appendFile(fileData, fileName, fileType, isSelf = false, timestamp = '') {
+      const container = document.createElement('div');
+      container.className = 'flex';
+      if (isSelf) container.classList.add('justify-end');
+
+      const bubble = document.createElement('div');
+      bubble.className = 'max-w-[75%] p-3 rounded-lg';
+
+      if (fileType.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = fileData;
+        img.alt = fileName;
+        img.className = 'photo-preview rounded-lg';
+        bubble.appendChild(img);
+      } else if (fileType.startsWith('audio/')) {
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.src = fileData;
+        bubble.appendChild(audio);
+      } else {
+        const link = document.createElement('a');
+        link.href = fileData;
+        link.download = fileName;
+        link.textContent = `Download ${fileName}`;
+        link.className = 'underline text-blue-600';
+        bubble.appendChild(link);
+      }
+
+      if (timestamp) {
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'text-xs text-gray-500 mt-1 text-right';
+        timeDiv.textContent = timestamp;
+        bubble.appendChild(timeDiv);
+      }
+
+      container.appendChild(bubble);
+      chatDiv.appendChild(container);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    function showSection(section) {
+      [roomSection, connectingSection, chatSection].forEach(s => s.classList.add('hidden'));
+      section.classList.remove('hidden');
+    }
+
+    function reset() {
+      if (conn) conn.close();
+      if (peer) peer.destroy();
+      if (stream) stream.getTracks().forEach(track => track.stop());
+      conn = null;
+      peer = null;
+      stream = null;
+      chatDiv.innerHTML = '';
+      messageInput.value = '';
+      messageInput.disabled = true;
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '🎤';
+      fileBtn.disabled = true;
+      cameraBtn.disabled = true;
+      showSection(roomSection);
+    }
+
+    resetBtn.onclick = reset;
+
+    hostBtn.onclick = () => {
+      const room = roomInput.value.trim();
+      if (!room) return alert('Enter a room name');
+      reset();
+      showSection(connectingSection);
+
+      peer = new Peer(room);
+      peer.on('open', () => showSection(chatSection));
+      peer.on('connection', connection => {
+        if (conn) { connection.close(); return; }
+        conn = connection;
+        setupConnection();
+      });
+      peer.on('error', err => { alert(err); reset(); });
+    };
+
+    joinBtn.onclick = () => {
+      const room = roomInput.value.trim();
+      if (!room) return alert('Enter a room name');
+      reset();
+      showSection(connectingSection);
+
+      peer = new Peer();
+      peer.on('open', () => {
+        conn = peer.connect(room);
+        conn.on('open', () => { showSection(chatSection); setupConnection(); });
+        conn.on('error', err => { alert(err); reset(); });
+      });
+      peer.on('error', err => { alert(err); reset(); });
+    };
+
+    function setupConnection() {
+      messageInput.disabled = false;
+      sendBtn.disabled = false;
+      fileBtn.disabled = false;
+      cameraBtn.disabled = false;
+
+      conn.on('data', data => {
+        if (data.type === 'message') {
+          const decryptedMsg = decrypt(data.text);
+          appendMessage(decryptedMsg, false, data.timestamp);
+        } else if (data.type === 'file') {
+          appendFile(data.fileData, data.fileName, data.fileType, false, data.timestamp);
+        }
+      });
+      conn.on('close', () => {
+        alert('Disconnected');
+        if (stream) stream.getTracks().forEach(track => track.stop());
+        reset();
+      });
+    }
+
+    messageInput.addEventListener('input', () => {
+      const msg = messageInput.value.trim();
+      sendBtn.innerHTML = msg ? '➤' : '🎤';
+    });
+
+    sendBtn.onclick = () => {
+      const msg = messageInput.value.trim();
+      if (!conn || !conn.open) return;
+
+      if (msg) {
+        const encryptedMsg = encrypt(msg);
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        conn.send({ type: 'message', text: encryptedMsg, timestamp });
+        appendMessage(msg, true, timestamp); // Display original message for sender
+        messageInput.value = '';
+        sendBtn.innerHTML = '🎤';
+      } else if (!isRecording) {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(s => {
+            stream = s;
+            mediaRecorder = new MediaRecorder(stream);
+            let chunks = [];
+            mediaRecorder.ondataavailable = e => chunks.push(e.data);
+            mediaRecorder.onstop = () => {
+              const blob = new Blob(chunks, { type: 'audio/webm' });
+              const reader = new FileReader();
+              reader.onload = () => {
+                const fileData = reader.result;
+                const fileName = 'voice_message.webm';
+                const fileType = 'audio/webm';
+                const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                conn.send({ type: 'file', fileData, fileName, fileType, timestamp });
+                appendFile(fileData, fileName, fileType, true, timestamp);
+              };
+              reader.readAsDataURL(blob);
+              stream.getTracks().forEach(track => track.stop());
+            };
+            mediaRecorder.start();
+            isRecording = true;
+            sendBtn.innerHTML = '⏹';
+          })
+          .catch(err => {
+            alert('Microphone permission denied');
+          });
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        sendBtn.innerHTML = '🎤';
+      }
+    };
+
+    messageInput.addEventListener('keypress', e => {
+      if (e.key === 'Enter' && messageInput.value.trim()) sendBtn.click();
+    });
+
+    fileBtn.onclick = () => fileInput.click();
+
+    fileInput.onchange = () => {
+      const file = fileInput.files[0];
+      if (!file || !conn || !conn.open) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const fileData = e.target.result;
+        const fileType = file.type;
+        const fileName = file.name;
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        conn.send({ type: 'file', fileData, fileName, fileType, timestamp });
+        appendFile(fileData, fileName, fileType, true, timestamp);
+      };
+      reader.readAsDataURL(file);
+      fileInput.value = '';
+    };
+
+    cameraBtn.onclick = () => cameraInput.click();
+
+    cameraInput.onchange = () => {
+      const file = cameraInput.files[0];
+      if (!file || !conn || !conn.open) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const fileData = e.target.result;
+        const fileType = file.type;
+        const fileName = file.name;
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        conn.send({ type: 'file', fileData, fileName, fileType, timestamp });
+        appendFile(fileData, fileName, fileType, true, timestamp);
+      };
+      reader.readAsDataURL(file);
+      cameraInput.value = '';
+    };
+  </script>
+</body>
+</html>
