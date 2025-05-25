@@ -59,11 +59,11 @@
   </section>
 
   <!-- Chat -->
-  <section id="chatSection" class="hidden flex-grow flex flex-col w-full pt-16">
-    <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-gray-100"></div>
+  <section id="chatSection" class="hidden grid grid-rows-[1fr_auto] w-full pt-16 h-[calc(100vh-4rem)]">
+    <div id="chat" class="overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-gray-100"></div>
     <div class="p-4 bg-white shadow-inner flex items-center justify-center space-x-2">
       <input id="message" type="text" placeholder="Type a message" autocomplete="off" disabled class="flex-1 p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 max-w-[60%] sm:max-w-[50%]" />
-      <input type="file" id="fileInput" accept="image/*" class="hidden" />
+      <input type="file" id="fileInput" accept="*/*" class="hidden" />
       <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" />
       <button id="fileBtn" disabled class="bg-yellow-500 text-white p-2 sm:p-3 rounded-full hover:bg-yellow-600">📎</button>
       <button id="cameraBtn" disabled class="bg-blue-500 text-white p-2 sm:p-3 rounded-full hover:bg-blue-600">📷</button>
@@ -113,30 +113,22 @@
       })
     });
 
-    // Encryption function: Caesar cipher with shift of 3, handling full characters
+    // Encryption function: Caesar cipher with shift of 3, only for alphabetic letters
     function encrypt(text) {
-      return Array.from(text).map(char => {
-        if (/[a-z]/.test(char)) {
-          return String.fromCharCode(((char.charCodeAt(0) - 97 + 3) % 26) + 97);
-        } else if (/[A-Z]/.test(char)) {
-          return String.fromCharCode(((char.charCodeAt(0) - 65 + 3) % 26) + 65);
-        } else {
-          return char; // Leave non-alphabetic characters unchanged
-        }
-      }).join('');
+      return text.replace(/[a-z]/gi, char => {
+        const code = char.charCodeAt(0);
+        const base = char >= 'a' ? 97 : 65;
+        return String.fromCharCode(((code - base + 3) % 26) + base);
+      });
     }
 
-    // Decryption function: Reverse Caesar cipher with shift of 3, handling full characters
+    // Decryption function: Reverse Caesar cipher with shift of 3, only for alphabetic letters
     function decrypt(text) {
-      return Array.from(text).map(char => {
-        if (/[a-z]/.test(char)) {
-          return String.fromCharCode(((char.charCodeAt(0) - 97 - 3 + 26) % 26) + 97);
-        } else if (/[A-Z]/.test(char)) {
-          return String.fromCharCode(((char.charCodeAt(0) - 65 - 3 + 26) % 26) + 65);
-        } else {
-          return char; // Leave non-alphabetic characters unchanged
-        }
-      }).join('');
+      return text.replace(/[a-z]/gi, char => {
+        const code = char.charCodeAt(0);
+        const base = char >= 'a' ? 97 : 65;
+        return String.fromCharCode(((code - base - 3 + 26) % 26) + base);
+      });
     }
 
     function appendMessage(text, isSelf = false, timestamp = '') {
