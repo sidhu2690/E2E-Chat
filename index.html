@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>E2E Chat</title>
+  <title>E2E Chat with Emoji, Photo, and Voice</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js"></script>
   <style>
@@ -59,8 +59,10 @@
     <div class="p-4 bg-white shadow-inner flex items-center">
       <input id="message" type="text" placeholder="Type a message" autocomplete="off" disabled class="flex-1 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 mr-3" />
       <input type="file" id="fileInput" accept="image/*" class="hidden" />
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" />
       <button id="fileBtn" disabled class="bg-yellow-500 text-white p-3 rounded-full hover:bg-yellow-600 mr-2">📎</button>
-      <button id="sendBtn" disabled class="bg-emerald-600 text-white p-3 rounded-full hover:bg-emerald-700">Send</button>
+      <button id="cameraBtn" disabled class="bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 mr-2">📷</button>
+      <button id="sendBtn" disabled class="bg-emerald-600 text-white p-3 rounded-full hover:bg-emerald-700">🎤</button>
     </div>
   </section>
 
@@ -68,6 +70,8 @@
   <script>
     let peer = null;
     let conn = null;
+    let isRecording = false;
+    let mediaRecorder = null;
 
     const roomInput = document.getElementById('roomInput');
     const hostBtn = document.getElementById('hostBtn');
@@ -81,6 +85,8 @@
     const sendBtn = document.getElementById('sendBtn');
     const fileInput = document.getElementById('fileInput');
     const fileBtn = document.getElementById('fileBtn');
+    const cameraInput = document.getElementById('cameraInput');
+    const cameraBtn = document.getElementById('cameraBtn');
 
     // Initialize Twemoji
     twemoji.parse(document.body, {
@@ -92,7 +98,7 @@
       })
     });
 
-    function appendMessage(text, isSelf = false) {
+    function appendMessage(text, isSelf = false, timestamp = '') {
       const container = document.createElement('div');
       container.className = 'flex';
       if (isSelf) container.classList.add('justify-end');
@@ -100,15 +106,29 @@
       const bubble = document.createElement('div');
       bubble.className = 'max-w-[75%] p-3 rounded-lg break-words ' +
         (isSelf ? 'bg-emerald-100 text-gray-800 rounded-br-none' : 'bg-white text-gray-900 rounded-bl-none shadow');
-      bubble.textContent = text;
-      twemoji.parse(bubble); // Parse emojis in the message
 
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'flex justify-between items-end';
+
+      const textDiv = document.createElement('div');
+      textDiv.textContent = text;
+      twemoji.parse(textDiv);
+      contentDiv.appendChild(textDiv);
+
+      if (timestamp) {
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'text-xs text-gray-500 ml-2';
+        timeSpan.textContent = timestamp;
+        contentDiv.appendChild(timeSpan);
+      }
+
+      bubble.appendChild(contentDiv);
       container.appendChild(bubble);
       chatDiv.appendChild(container);
       chatDiv.scrollTop = chatDiv.scrollHeight;
     }
 
-    function appendFile(fileData, fileName, fileType, isSelf = false) {
+    function appendFile(fileData, fileName, fileType, isSelf = false, timestamp = '') {
       const container = document.createElement('div');
       container.className = 'flex';
       if (isSelf) container.classList.add('justify-end');
@@ -117,20 +137,30 @@
       bubble.className = 'max-w-[75%] p-3 rounded-lg';
 
       if (fileType.startsWith('image/')) {
-        // Display image preview like WhatsApp
         const img = document.createElement('img');
         img.src = fileData;
         img.alt = fileName;
         img.className = 'photo-preview rounded-lg';
         bubble.appendChild(img);
+      } else if (fileType.startsWith('audio/')) {
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.src = fileData;
+        bubble.appendChild(audio);
       } else {
-        // Fallback for non-image files (though limited to images via accept attribute)
         const link = document.createElement('a');
         link.href = fileData;
         link.download = fileName;
         link.textContent = `Download ${fileName}`;
         link.className = 'underline text-blue-600';
         bubble.appendChild(link);
+      }
+
+      if (timestamp) {
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'text-xs text-gray-500 mt-1 text-right';
+        timeDiv.textContent = timestamp;
+        bubble.appendChild(timeDiv);
       }
 
       container.appendChild(bubble);
@@ -152,7 +182,9 @@
       messageInput.value = '';
       messageInput.disabled = true;
       sendBtn.disabled = true;
+      sendBtn.innerHTML = '🎤';
       fileBtn.disabled = true;
+      cameraBtn.disabled = true;
       showSection(roomSection);
     }
 
@@ -193,27 +225,71 @@
       messageInput.disabled = false;
       sendBtn.disabled = false;
       fileBtn.disabled = false;
+      cameraBtn.disabled = false;
 
       conn.on('data', data => {
         if (data.type === 'message') {
-          appendMessage(data.text);
+          appendMessage(data.text, false, data.timestamp);
         } else if (data.type === 'file') {
-          appendFile(data.fileData, data.fileName, data.fileType);
+          appendFile(data.fileData, data.fileName, data.fileType, false, data.timestamp);
         }
       });
       conn.on('close', () => { alert('Disconnected'); reset(); });
     }
 
+    messageInput.addEventListener('input', () => {
+      const msg = messageInput.value.trim();
+      sendBtn.innerHTML = msg ? '➤' : '🎤';
+    });
+
     sendBtn.onclick = () => {
       const msg = messageInput.value.trim();
-      if (!msg || !conn || !conn.open) return;
-      conn.send({ type: 'message', text: msg });
-      appendMessage(msg, true);
-      messageInput.value = '';
+      if (!conn || !conn.open) return;
+
+      if (msg) {
+        // Send text message
+        const timestamp = new Date().toLocaleTimeString();
+        conn.send({ type: 'message', text: msg, timestamp });
+        appendMessage(msg, true, timestamp);
+        messageInput.value = '';
+        sendBtn.innerHTML = '🎤';
+      } else if (!isRecording) {
+        // Start recording
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+            let chunks = [];
+            mediaRecorder.ondataavailable = e => chunks.push(e.data);
+            mediaRecorder.onstop = () => {
+              const blob = new Blob(chunks, { type: 'audio/webm' });
+              const reader = new FileReader();
+              reader.onload = () => {
+                const fileData = reader.result;
+                const fileName = 'voice_message.webm';
+                const fileType = 'audio/webm';
+                const timestamp = new Date().toLocaleTimeString();
+                conn.send({ type: 'file', fileData, fileName, fileType, timestamp });
+                appendFile(fileData, fileName, fileType, true, timestamp);
+              };
+              reader.readAsDataURL(blob);
+            };
+            mediaRecorder.start();
+            isRecording = true;
+            sendBtn.innerHTML = '⏹';
+          })
+          .catch(err => {
+            alert('Microphone permission denied');
+          });
+      } else {
+        // Stop recording
+        mediaRecorder.stop();
+        isRecording = false;
+        sendBtn.innerHTML = '🎤';
+      }
     };
 
     messageInput.addEventListener('keypress', e => {
-      if (e.key === 'Enter') sendBtn.click();
+      if (e.key === 'Enter' && messageInput.value.trim()) sendBtn.click();
     });
 
     fileBtn.onclick = () => fileInput.click();
@@ -225,11 +301,31 @@
       reader.onload = e => {
         const fileData = e.target.result;
         const fileType = file.type;
-        conn.send({ type: 'file', fileData, fileName: file.name, fileType });
-        appendFile(fileData, file.name, fileType, true);
+        const fileName = file.name;
+        const timestamp = new Date().toLocaleTimeString();
+        conn.send({ type: 'file', fileData, fileName, fileType, timestamp });
+        appendFile(fileData, fileName, fileType, true, timestamp);
       };
       reader.readAsDataURL(file);
       fileInput.value = '';
+    };
+
+    cameraBtn.onclick = () => cameraInput.click();
+
+    cameraInput.onchange = () => {
+      const file = cameraInput.files[0];
+      if (!file || !conn || !conn.open) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const fileData = e.target.result;
+        const fileType = file.type;
+        const fileName = file.name;
+        const timestamp = new Date().toLocaleTimeString();
+        conn.send({ type: 'file', fileData, fileName, fileType, timestamp });
+        appendFile(fileData, fileName, fileType, true, timestamp);
+      };
+      reader.readAsDataURL(file);
+      cameraInput.value = '';
     };
   </script>
 </body>
