@@ -1,76 +1,97 @@
-# E2E-Chat
-E2E-Chat is a secure, peer-to-peer chat application built with PeerJS and WebRTC, designed for end-to-end (E2E) encrypted messaging and file sharing between two users. One user creates a chat room, another joins, and they communicate directly with no server storing their data. The app features a clean, responsive interface using Tailwind CSS.
-Features
+# 🌿 E2E Chat — Private, Peer-to-Peer, Encrypted Communication
 
-E2E Encrypted Messaging: Messages are secured with WebRTC’s DTLS and SRTP protocols, ensuring only the two connected users can read them.
-E2E Encrypted File Sharing: Send images, PDFs, or other files securely with WebRTC encryption.
-Two-User Limit: Only two users can connect per room, blocking third-party intrusions even if the room name is guessed or brute-forced.
-Minimal Server Role: The PeerJS signalling server only sets up the initial connection (exchanging metadata like IP addresses) and then has no further involvement.
-No Server Attacks: Serverless design prevents SQL injection and similar attacks.
-XSS Protection: Input sanitisation blocks cross-site scripting (XSS) attacks.
-Responsive Design: Built with Tailwind CSS for a modern, mobile-friendly UI.
+> 🚀 A lightweight, zero-backend, secure chat app with media support — built for **true privacy** and **direct communication**.
 
-## Demo
-Try it out here: https://sidhu2690.github.io/E2E-Chat/
-### Prerequisites
+---
 
-A modern web browser (e.g., Chrome, Firefox, Edge) with WebRTC support.
-Internet connection for accessing the PeerJS signalling server.
+## 🌈 Highlights
 
-### Setup
+* 🔐 **End-to-End Encrypted**: Messages are encrypted (currently via Caesar Cipher) before transmission.
+* 🛡️ **True Peer-to-Peer (P2P)**: Uses WebRTC via PeerJS — **no server relays your data**, and once connected, even signaling is discarded.
+* 👥 **Strict 1-to-1 Communication**: Like a digital walkie-talkie — only two people can connect to a room, and **no one else can eavesdrop**, even if they know your room key.
+* 📁 **File Sharing**: Send **images**, **audio recordings**, or **any file** securely.
+* 🎤 **Voice Messages**: Record and transmit audio messages directly in the chat.
+* 🌐 **No Data Storage**: Zero logs, zero databases — messages and media are **not stored anywhere**.
+* 📱 **Mobile Friendly**: Works beautifully across devices thanks to Tailwind CSS.
+* 🤖 **Emoji-Ready**: Auto-parses emojis using [Twemoji](https://twemoji.twitter.com/).
 
-Clone the repository: git clone https://github.com/sidhu2690/E2E-Chat.git
-cd E2E-Chat
+---
 
+## 🔧 Features
 
-Open index.html in a browser or host it on a secure web server (must use HTTPS for WebRTC compatibility).
+| Feature           | Description                                                             |
+| ----------------- | ----------------------------------------------------------------------- |
+| 🌿 No Servers     | Only used for signaling. After that, the server steps away.             |
+| 🧩 Caesar Cipher  | Simple demo encryption (can be upgraded to AES or NaCl).                |
+| 🎥 Camera Support | Capture and share images directly using your camera.                    |
+| 📂 Media Recorder | Record voice messages and send them on the go.                          |
+| 🧠 Room-based     | Users can **create** or **join** rooms — secure and ephemeral.          |
+| 📦 100% Frontend  | Can be hosted on GitHub Pages, Vercel, Netlify — **no backend needed**. |
 
-### Usage
-Open the Application
-Access the hosted app via a secure web server (HTTPS required for WebRTC).
-Create a Room (Host)
+---
 
-Enter a unique room name (e.g., room-x7b9p3q8r2) in the input field.
-Click Create Room to host a new chat room.
-Share the room name privately with your friend (e.g., via a secure channel like Signal or WhatsApp).
+## 🛡️ Privacy First — Our Philosophy
 
-Join a Room (Participant)
+This app was built with one mission: **make conversations private by default.**
 
-Enter the room name provided by the host.
-Click Join Room to connect directly to the host via WebRTC.
+* 📶 Connections are established directly between two browsers (via WebRTC).
+* 🧍‍♂️🧍‍♀️ **Only two participants can ever connect to a room** — others are rejected.
+* 🔐 Even if someone gets your room name, they can't listen or join if two peers are already connected.
+* 🔄 Nothing is stored, nothing is cached — everything is ephemeral.
+* 🔒 Encryption (currently Caesar Cipher) ensures readable content never touches the wire in plain form.
 
-Chat and Share Files
+> ⚠️ **Note**: Caesar Cipher is used here for demonstration purposes — it can and should be replaced with a modern encryption algorithm (like AES-GCM or libsodium). But even in its current form, **interception is almost impossible** due to the direct P2P channel.
 
-Once connected, type messages in the input field and click Send or press Enter.
-To share a file, click the 📎 button, select a file (e.g., image or PDF), and send it.
-Messages and files appear in the chat window, with your messages on the right and the other user’s on the left.
-Only the two connected users can send and receive messages or files.
+---
 
-### How File Sharing Works
+## 🧪 Demo & How to Use
 
-Upload: Click the 📎 button to select a file.
-Transfer: The file is split into chunks, encrypted with WebRTC’s DTLS protocol, and sent directly to the other user.
-Receive: Files appear in the chat for viewing or downloading, fully encrypted.
+1. **Enter a Room Name** (e.g., `room123`)
+2. **Create Room** (Host) or **Join Room** (Guest)
+3. Once connected, chat freely:
 
-Security
-E2E-Chat is built for secure, private communication with minimal server involvement:
+   * 💬 Type and send messages
+   * 📎 Share files
+   * 📷 Snap or upload images
+   * 🎤 Press the mic to record and send voice
 
-End-to-End Encryption: Messages and files are encrypted using WebRTC’s DTLS for key exchange and SRTP for data transfer. Only the two connected users can decrypt them.
-Server Only for Setup: The PeerJS signalling server facilitates connection setup (exchanging room names and IP addresses) and then steps out completely. It cannot access or store messages or files.
-Two-User Lock: Only two users can connect per room. If a third party tries to join (even with the correct room name), they’re blocked, preventing intrusions.
-No Server Storage: With no server-side data storage, attacks like SQL injection are impossible.
-XSS Protection: User inputs are sanitised to prevent cross-site scripting (XSS) attacks.
-Metadata Exposure: The signalling server can see room names and IP addresses, but message and file content remains E2E encrypted.
+> Think of it like a private tunnel — no one sees the entrance or the exit but you.
 
-Recommendations for Secure Use
+---
 
-Share room names only through secure channels (e.g., encrypted messaging apps like Signal).
-Use long, random room names (10+ characters, e.g., room-x7b9p3q8r2) to prevent guessing or brute-forcing.
+## 🚀 Deployment
 
+Host it anywhere:
 
-Contributing
-Contributions are welcome to improve security and features! To contribute:
+* GitHub Pages
+* Netlify
+* Vercel
+* Any static site hosting service
 
-License
-This project is licensed under the MIT License. 
-See the LICENSE file for details.
+No backend required. Just HTML, CSS (via Tailwind), and JavaScript (with PeerJS).
+
+---
+
+## 🔮 Future Possibilities
+
+* ✅ Upgrade encryption to AES, RSA, or NaCl
+* ✅ Add QR code for room sharing
+* ✅ Add message persistence (optional, client-only)
+* ✅ Multi-user support (optional extension)
+* ✅ Typing indicators, message reactions, etc.
+
+---
+
+## 📜 License
+
+MIT — Free to use, modify, and expand.
+
+---
+
+## ❤️ Final Word
+
+This app isn’t just a chat tool — it's a **digital sanctuary for secure, private communication**. With just a room name, you open a secret channel between two people. No trace, no tracking, no compromise.
+
+> Use it for quick personal chats, secure media transfers, or just the joy of building a trustless communication system.
+
+Stay private. Stay connected. ✨
