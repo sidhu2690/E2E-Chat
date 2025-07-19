@@ -2,6 +2,8 @@
 
 > 🚀 A lightweight, zero-backend, secure chat app with media support — built for **true privacy** and **direct communication**.
 
+🔗 **[👉 Use it here](https://e2echat.pages.dev/)**
+
 ---
 
 ## 🌈 Highlights
@@ -12,8 +14,7 @@
 * 📁 **File Sharing**: Send **images**, **audio recordings**, or **any file** securely.
 * 🎤 **Voice Messages**: Record and transmit audio messages directly in the chat.
 * 🌐 **No Data Storage**: Zero logs, zero databases — messages and media are **not stored anywhere**.
-* 📱 **Mobile Friendly**: Works beautifully across devices thanks to Tailwind CSS.
-* 🤖 **Emoji-Ready**: Auto-parses emojis using [Twemoji](https://twemoji.twitter.com/).
+* 📱 **Mobile Friendly**: Works beautifully across devices.
 
 ---
 
@@ -69,16 +70,6 @@ Host it anywhere:
 * Any static site hosting service
 
 No backend required. Just HTML, CSS (via Tailwind), and JavaScript (with PeerJS).
-
----
-
-## 🔮 Future Possibilities
-
-* ✅ Upgrade encryption to AES, RSA, or NaCl
-* ✅ Add QR code for room sharing
-* ✅ Add message persistence (optional, client-only)
-* ✅ Multi-user support (optional extension)
-* ✅ Typing indicators, message reactions, etc.
 
 ---
 
