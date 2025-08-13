@@ -11,79 +11,433 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
     }
+    @keyframes ripple {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
     .connecting::before {
       content: '';
       display: inline-block;
       width: 8px;
       height: 8px;
-      background-color: #10b981;
+      background-color: #25d366;
       border-radius: 50%;
       margin-right: 8px;
       animation: pulse 1.5s infinite;
     }
+    .calling::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: rgba(239, 68, 68, 0.3);
+      animation: ripple 1.5s infinite;
+      transform: translate(-50%, -50%);
+    }
     #chat::-webkit-scrollbar { width: 4px; }
     #chat::-webkit-scrollbar-track { background: transparent; }
-    #chat::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.2); border-radius: 2px; }
-    .emoji { height: 1em; width: 1em; vertical-align: middle; }
-    .photo-preview { max-width: 200px; max-height: 200px; object-fit: cover; }
-    #chatSection { max-width: 100%; margin: 0 auto; }
-    body {
-      font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    #chat::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 2px; }
+    .emoji { height: 1.2em; width: 1.2em; vertical-align: middle; }
+    .photo-preview { max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 8px; }
+    
+    /* WhatsApp-style message bubbles */
+    .message-sent {
+      background: #dcf8c6;
+      border-radius: 18px 18px 4px 18px;
+    }
+    .message-received {
+      background: white;
+      border-radius: 18px 18px 18px 4px;
+    }
+    
+    /* Chat wallpaper pattern */
+    .chat-bg {
+      background-image: 
+        radial-gradient(circle at 25% 25%, rgba(37, 211, 102, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(37, 211, 102, 0.05) 0%, transparent 50%);
+      background-color: #efeae2;
+    }
+    
+    /* Status indicators */
+    .status-icon {
+      width: 16px;
+      height: 16px;
+      margin-left: 4px;
+    }
+    
+    /* Input focus styles */
+    .input-focus:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(37, 211, 102, 0.2);
+    }
+
+    /* Video call styles */
+    .video-container {
+      position: relative;
+      background: #1a1a1a;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .video-local {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 120px;
+      height: 90px;
+      border-radius: 8px;
+      border: 2px solid white;
+      object-fit: cover;
+      z-index: 10;
+    }
+    
+    .video-remote {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .call-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 16px;
+      z-index: 20;
+    }
+    
+    .control-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .control-btn:hover {
+      transform: scale(1.1);
+    }
+    
+    .control-btn.mute { background: rgba(0,0,0,0.5); }
+    .control-btn.mute.active { background: #ef4444; }
+    .control-btn.video { background: rgba(0,0,0,0.5); }
+    .control-btn.video.active { background: #ef4444; }
+    .control-btn.end { background: #ef4444; }
+    
+    /* Audio visualizer */
+    .audio-visualizer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      height: 40px;
+    }
+    
+    .audio-bar {
+      width: 4px;
+      background: #10b981;
+      border-radius: 2px;
+      transition: height 0.1s ease;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+      .message-sent, .message-received {
+        max-width: 85%;
+      }
+      .video-local {
+        width: 80px;
+        height: 60px;
+        top: 12px;
+        right: 12px;
+      }
+      .call-controls {
+        bottom: 16px;
+        gap: 12px;
+      }
+      .control-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+      }
     }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
-  <!-- Header -->
-  <header class="bg-emerald-600 p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-10">
-    <button id="resetBtn" class="text-white hover:opacity-80" title="Back to Rooms">
-      ←
-    </button>
-    <h1 class="text-xl font-semibold text-white">E2E Chat</h1>
-    <div></div>
-  </header>
-
   <!-- Room Selection -->
-  <section id="roomSection" class="flex-grow flex items-center justify-center p-4 pt-16">
-    <div class="w-full max-w-sm bg-white rounded-lg shadow-lg p-6">
-      <input id="roomInput" placeholder="Room name (e.g., room1234)" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-      <div class="flex space-x-3">
-        <button id="hostBtn" class="flex-1 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Create Room</button>
-        <button id="joinBtn" class="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Join Room</button>
+  <section id="roomSection" class="flex-grow flex items-center justify-center p-4 bg-gradient-to-br from-teal-50 to-green-50">
+    <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl p-8">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-semibold text-gray-800 mb-2">Secure Chat</h1>
+        <p class="text-gray-600 text-sm">End-to-end encrypted messaging</p>
+      </div>
+      
+      <input id="roomInput" placeholder="Enter room code" 
+             class="w-full p-4 border border-gray-200 rounded-xl mb-6 input-focus text-center font-mono tracking-wider" />
+      
+      <div class="space-y-3">
+        <button id="hostBtn" class="w-full py-4 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors font-medium">
+          Create Room
+        </button>
+        <button id="joinBtn" class="w-full py-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors font-medium">
+          Join Room
+        </button>
       </div>
     </div>
   </section>
 
   <!-- Connecting -->
-  <section id="connectingSection" class="hidden flex-grow flex items-center justify-center p-4 pt-16">
-    <p class="text-gray-600 connecting">Connecting...</p>
+  <section id="connectingSection" class="hidden flex-grow flex items-center justify-center p-4 bg-gradient-to-br from-teal-50 to-green-50">
+    <div class="text-center">
+      <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+      <p class="text-gray-600 text-lg connecting">Connecting to secure chat...</p>
+    </div>
+  </section>
+
+  <!-- Incoming Call Modal -->
+  <div id="incomingCallModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl p-8 text-center max-w-sm mx-4">
+      <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 relative calling">
+        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+        </svg>
+      </div>
+      <h3 class="text-xl font-semibold mb-2" id="callType">Incoming Call</h3>
+      <p class="text-gray-600 mb-6">Someone is calling you</p>
+      <div class="flex gap-4 justify-center">
+        <button id="declineCall" class="px-6 py-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.68.28-.53 0-.96-.43-.96-.96V9.72C2.6 4.23 6.97 2 12 2s9.4 2.23 10.44 7.72v5.17c0 .53-.43.96-.96.96-.25 0-.5-.1-.68-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+          </svg>
+        </button>
+        <button id="acceptCall" class="px-6 py-3 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Call Screen -->
+  <section id="callSection" class="hidden fixed inset-0 bg-gray-900 z-40">
+    <!-- Video Call -->
+    <div id="videoCallContainer" class="w-full h-full video-container">
+      <video id="remoteVideo" class="video-remote" autoplay playsinline></video>
+      <video id="localVideo" class="video-local" autoplay playsinline muted></video>
+      
+      <!-- Call info overlay -->
+      <div class="absolute top-6 left-6 text-white">
+        <p class="text-lg font-medium">Video Call</p>
+        <p class="text-sm opacity-75" id="callTimer">00:00</p>
+      </div>
+      
+      <!-- Call controls -->
+      <div class="call-controls">
+        <button id="muteBtn" class="control-btn mute" title="Mute/Unmute">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path id="muteIcon" d="M12 2c1.1 0 2 .9 2 2v6c0 1.1-.9 2-2 2s-2-.9-2-2V4c0-1.1.9-2 2-2zm5.3 6c0 3-2.54 5.1-5.3 5.1S6.7 11 6.7 8H5c0 3.41 2.72 6.23 6 6.72V17h-2v2h6v-2h-2v-2.28C16.28 14.23 19 11.41 19 8h-1.7z"/>
+            <path id="unmuteIcon" class="hidden" d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V4c0-1.1-.9-2-2-2s-2 .9-2 2v.18l3.98 3.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.1.9 2 2 2 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V17h-2v2h6v-2h-2v-2.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/>
+          </svg>
+        </button>
+        
+        <button id="videoBtn" class="control-btn video" title="Video On/Off">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path id="videoIcon" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+            <path id="videoOffIcon" class="hidden" d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82l8.18 8.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2z"/>
+          </svg>
+        </button>
+        
+        <button id="endCallBtn" class="control-btn end" title="End Call">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.68.28-.53 0-.96-.43-.96-.96V9.72C2.6 4.23 6.97 2 12 2s9.4 2.23 10.44 7.72v5.17c0 .53-.43.96-.96.96-.25 0-.5-.1-.68-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Audio Call -->
+    <div id="audioCallContainer" class="w-full h-full flex flex-col items-center justify-center bg-gray-900 text-white hidden">
+      <div class="text-center mb-12">
+        <div class="w-32 h-32 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-medium mb-2">Audio Call</h2>
+        <p class="text-gray-400" id="audioCallTimer">00:00</p>
+      </div>
+      
+      <!-- Audio visualizer -->
+      <div class="audio-visualizer mb-12">
+        <div class="audio-bar" style="height: 10px;"></div>
+        <div class="audio-bar" style="height: 15px;"></div>
+        <div class="audio-bar" style="height: 8px;"></div>
+        <div class="audio-bar" style="height: 20px;"></div>
+        <div class="audio-bar" style="height: 12px;"></div>
+        <div class="audio-bar" style="height: 18px;"></div>
+        <div class="audio-bar" style="height: 6px;"></div>
+        <div class="audio-bar" style="height: 14px;"></div>
+      </div>
+      
+      <!-- Audio call controls -->
+      <div class="flex gap-8">
+        <button id="audioMuteBtn" class="control-btn mute" title="Mute/Unmute">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path id="audioMuteIcon" d="M12 2c1.1 0 2 .9 2 2v6c0 1.1-.9 2-2 2s-2-.9-2-2V4c0-1.1.9-2 2-2zm5.3 6c0 3-2.54 5.1-5.3 5.1S6.7 11 6.7 8H5c0 3.41 2.72 6.23 6 6.72V17h-2v2h6v-2h-2v-2.28C16.28 14.23 19 11.41 19 8h-1.7z"/>
+            <path id="audioUnmuteIcon" class="hidden" d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V4c0-1.1-.9-2-2-2s-2 .9-2 2v.18l3.98 3.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.1.9 2 2 2 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V17h-2v2h6v-2h-2v-2.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/>
+          </svg>
+        </button>
+        
+        <button id="endAudioCallBtn" class="control-btn end" title="End Call">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.68.28-.53 0-.96-.43-.96-.96V9.72C2.6 4.23 6.97 2 12 2s9.4 2.23 10.44 7.72v5.17c0 .53-.43.96-.96.96-.25 0-.5-.1-.68-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
   </section>
 
   <!-- Chat -->
-  <section id="chatSection" class="hidden grid grid-rows-[1fr_auto] w-full pt-16 h-[calc(100vh-4rem)]">
-    <div id="chat" class="overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-gray-100"></div>
-    <div class="p-4 bg-white shadow-inner flex items-center justify-center space-x-2">
-      <input id="message" type="text" placeholder="Type a message" autocomplete="off" disabled class="flex-1 p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 max-w-[60%] sm:max-w-[50%]" />
-      <input type="file" id="fileInput" accept="*/*" class="hidden" />
-      <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" />
-      <button id="fileBtn" disabled class="bg-yellow-500 text-white p-2 sm:p-3 rounded-full hover:bg-yellow-600">📎</button>
-      <button id="cameraBtn" disabled class="bg-blue-500 text-white p-2 sm:p-3 rounded-full hover:bg-blue-600">📷</button>
-      <button id="sendBtn" disabled class="bg-emerald-600 text-white p-2 sm:p-3 rounded-full hover:bg-emerald-700">🎤</button>
+  <section id="chatSection" class="hidden flex flex-col h-screen">
+    <!-- Chat Header -->
+    <header class="bg-green-600 p-4 flex items-center shadow-lg">
+      <button id="resetBtn" class="text-white hover:bg-green-700 rounded-full p-2 mr-3 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      
+      <div class="flex items-center flex-1">
+        <div class="w-10 h-10 bg-green-400 rounded-full flex items-center justify-center mr-3">
+          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-white font-medium text-lg">Secure Chat</h2>
+          <p class="text-green-100 text-sm" id="statusText">End-to-end encrypted</p>
+        </div>
+      </div>
+
+      <div class="flex space-x-2">
+        <button id="voiceCallBtn" disabled class="text-white hover:bg-green-700 rounded-full p-2 transition-colors opacity-50" title="Voice Call">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+          </svg>
+        </button>
+        
+        <button id="videoCallBtn" disabled class="text-white hover:bg-green-700 rounded-full p-2 transition-colors opacity-50" title="Video Call">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+          </svg>
+        </button>
+        
+        <button class="text-white hover:bg-green-700 rounded-full p-2 transition-colors opacity-50 cursor-not-allowed" disabled title="Coming soon">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Chat Messages -->
+    <div id="chat" class="flex-1 overflow-y-auto p-4 chat-bg"></div>
+
+    <!-- Chat Input -->
+    <div class="bg-gray-100 p-4 border-t">
+      <div class="flex items-end space-x-2 max-w-4xl mx-auto">
+        <div class="flex space-x-1">
+          <input type="file" id="fileInput" accept="*/*" class="hidden" />
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" />
+          
+          <button id="fileBtn" disabled class="bg-gray-400 text-white p-3 rounded-full hover:bg-gray-500 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+            </svg>
+          </button>
+          
+          <button id="cameraBtn" disabled class="bg-gray-400 text-white p-3 rounded-full hover:bg-gray-500 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex-1 flex items-end bg-white rounded-full shadow-sm">
+          <input id="message" type="text" placeholder="Type a message" autocomplete="off" disabled 
+                 class="flex-1 p-4 rounded-full input-focus border-none bg-transparent resize-none" />
+          
+          <button id="emojiBtn" disabled class="p-3 text-gray-500 hover:text-gray-700 transition-colors">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+          </button>
+        </div>
+
+        <button id="sendBtn" disabled class="bg-green-500 text-white p-3 rounded-full hover:bg-green-600 transition-colors">
+          <svg id="micIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+          </svg>
+          <svg id="sendIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+          </svg>
+          <svg id="stopIcon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6 6h12v12H6z"></path>
+          </svg>
+        </button>
+      </div>
     </div>
   </section>
 
   <!-- Image Modal -->
-  <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
-    <img id="modalImage" class="max-w-[90%] max-h-[90%]" />
-    <button id="closeModal" class="absolute top-4 right-4 text-white text-3xl">×</button>
+  <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden">
+    <div class="relative max-w-[95%] max-h-[95%]">
+      <img id="modalImage" class="max-w-full max-h-full rounded-lg" />
+      <button id="closeModal" class="absolute -top-4 -right-4 bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-700">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
   <script>
     let peer = null;
     let conn = null;
+    let call = null;
+    let localStream = null;
+    let remoteStream = null;
     let isRecording = false;
     let mediaRecorder = null;
     let stream = null;
+    let isMuted = false;
+    let isVideoOff = false;
+    let callStartTime = null;
+    let callTimer = null;
+    let currentCallType = null; // 'video' or 'audio'
 
     const roomInput = document.getElementById('roomInput');
     const hostBtn = document.getElementById('hostBtn');
@@ -92,70 +446,113 @@
     const roomSection = document.getElementById('roomSection');
     const connectingSection = document.getElementById('connectingSection');
     const chatSection = document.getElementById('chatSection');
+    const callSection = document.getElementById('callSection');
     const chatDiv = document.getElementById('chat');
     const messageInput = document.getElementById('message');
     const sendBtn = document.getElementById('sendBtn');
+    const micIcon = document.getElementById('micIcon');
+    const sendIcon = document.getElementById('sendIcon');
+    const stopIcon = document.getElementById('stopIcon');
     const fileInput = document.getElementById('fileInput');
     const fileBtn = document.getElementById('fileBtn');
-    const cameraInput = document.getElementById('cameraInput');
     const cameraBtn = document.getElementById('cameraBtn');
+    const emojiBtn = document.getElementById('emojiBtn');
     const imageModal = document.getElementById('imageModal');
     const modalImage = document.getElementById('modalImage');
     const closeModal = document.getElementById('closeModal');
+    const statusText = document.getElementById('statusText');
+    
+    // Call elements
+    const voiceCallBtn = document.getElementById('voiceCallBtn');
+    const videoCallBtn = document.getElementById('videoCallBtn');
+    const incomingCallModal = document.getElementById('incomingCallModal');
+    const acceptCall = document.getElementById('acceptCall');
+    const declineCall = document.getElementById('declineCall');
+    const callTypeText = document.getElementById('callType');
+    
+    // Video call elements
+    const videoCallContainer = document.getElementById('videoCallContainer');
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const muteBtn = document.getElementById('muteBtn');
+    const videoBtn = document.getElementById('videoBtn');
+    const endCallBtn = document.getElementById('endCallBtn');
+    const callTimerDisplay = document.getElementById('callTimer');
+    
+    // Audio call elements
+    const audioCallContainer = document.getElementById('audioCallContainer');
+    const audioMuteBtn = document.getElementById('audioMuteBtn');
+    const endAudioCallBtn = document.getElementById('endAudioCallBtn');
+    const audioCallTimer = document.getElementById('audioCallTimer');
 
     // Initialize Twemoji
     twemoji.parse(document.body, {
       folder: 'svg',
       ext: '.svg',
-      className: 'emoji',
-      attributes: () => ({
-        style: 'height: 1em; width: 1em; vertical-align: middle;'
-      })
+      className: 'emoji'
     });
 
-    // Encryption function: Caesar cipher with shift of 3, only for alphabetic letters
+    // Simple Caesar cipher encryption (shift by 3)
     function encrypt(text) {
-      return text.replace(/[a-z]/gi, char => {
-        const code = char.charCodeAt(0);
-        const base = char >= 'a' ? 97 : 65;
-        return String.fromCharCode(((code - base + 3) % 26) + base);
-      });
+      return text.split('').map(char => {
+        if (char >= 'a' && char <= 'z') {
+          return String.fromCharCode((char.charCodeAt(0) - 97 + 3) % 26 + 97);
+        } else if (char >= 'A' && char <= 'Z') {
+          return String.fromCharCode((char.charCodeAt(0) - 65 + 3) % 26 + 65);
+        } else {
+          return char;
+        }
+      }).join('');
     }
 
-    // Decryption function: Reverse Caesar cipher with shift of 3, only for alphabetic letters
+    // Simple Caesar cipher decryption (shift back by 3)
     function decrypt(text) {
-      return text.replace(/[a-z]/gi, char => {
-        const code = char.charCodeAt(0);
-        const base = char >= 'a' ? 97 : 65;
-        return String.fromCharCode(((code - base - 3 + 26) % 26) + base);
-      });
+      return text.split('').map(char => {
+        if (char >= 'a' && char <= 'z') {
+          return String.fromCharCode((char.charCodeAt(0) - 97 - 3 + 26) % 26 + 97);
+        } else if (char >= 'A' && char <= 'Z') {
+          return String.fromCharCode((char.charCodeAt(0) - 65 - 3 + 26) % 26 + 65);
+        } else {
+          return char;
+        }
+      }).join('');
     }
 
     function appendMessage(text, isSelf = false, timestamp = '') {
       const container = document.createElement('div');
-      container.className = 'flex';
-      if (isSelf) container.classList.add('justify-end');
+      container.className = `flex mb-2 ${isSelf ? 'justify-end' : 'justify-start'}`;
 
       const bubble = document.createElement('div');
-      bubble.className = 'max-w-[75%] p-3 rounded-lg break-words ' +
-        (isSelf ? 'bg-emerald-100 text-gray-800 rounded-br-none' : 'bg-white text-gray-900 rounded-bl-none shadow');
-
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'flex justify-between items-end';
+      bubble.className = `max-w-xs lg:max-w-md px-4 py-2 shadow-sm relative ${
+        isSelf ? 'message-sent' : 'message-received'
+      }`;
 
       const textDiv = document.createElement('div');
+      textDiv.className = 'text-gray-800 break-words';
       textDiv.textContent = text;
       twemoji.parse(textDiv);
-      contentDiv.appendChild(textDiv);
 
+      const timeDiv = document.createElement('div');
+      timeDiv.className = `text-xs mt-1 flex items-center justify-end ${
+        isSelf ? 'text-gray-600' : 'text-gray-500'
+      }`;
+      
       if (timestamp) {
-        const timeSpan = document.createElement('span');
-        timeSpan.className = 'text-xs text-gray-500 ml-2';
-        timeSpan.textContent = timestamp;
-        contentDiv.appendChild(timeSpan);
+        timeDiv.textContent = timestamp;
+      } else {
+        timeDiv.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
 
-      bubble.appendChild(contentDiv);
+      if (isSelf) {
+        // Add message status (delivered/read indicators)
+        const statusIcon = document.createElement('span');
+        statusIcon.className = 'ml-1 text-blue-500';
+        statusIcon.innerHTML = '✓✓';
+        timeDiv.appendChild(statusIcon);
+      }
+
+      bubble.appendChild(textDiv);
+      bubble.appendChild(timeDiv);
       container.appendChild(bubble);
       chatDiv.appendChild(container);
       chatDiv.scrollTop = chatDiv.scrollHeight;
@@ -163,50 +560,399 @@
 
     function appendFile(fileData, fileName, fileType, isSelf = false, timestamp = '') {
       const container = document.createElement('div');
-      container.className = 'flex';
-      if (isSelf) container.classList.add('justify-end');
+      container.className = `flex mb-2 ${isSelf ? 'justify-end' : 'justify-start'}`;
 
       const bubble = document.createElement('div');
-      bubble.className = 'max-w-[75%] p-3 rounded-lg';
+      bubble.className = `max-w-xs lg:max-w-md p-2 shadow-sm ${
+        isSelf ? 'message-sent' : 'message-received'
+      }`;
 
       if (fileType.startsWith('image/')) {
         const img = document.createElement('img');
         img.src = fileData;
         img.alt = fileName;
-        img.className = 'photo-preview rounded-lg cursor-pointer';
+        img.className = 'photo-preview cursor-pointer w-full rounded-lg mb-2';
         bubble.appendChild(img);
       } else if (fileType.startsWith('audio/')) {
+        const audioContainer = document.createElement('div');
+        audioContainer.className = 'flex items-center space-x-3 p-2 bg-green-50 rounded-lg mb-2';
+        
+        const playBtn = document.createElement('button');
+        playBtn.className = 'w-12 h-12 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors flex-shrink-0';
+        
+        const playIcon = document.createElement('svg');
+        playIcon.className = 'w-5 h-5 text-white ml-0.5';
+        playIcon.innerHTML = '<path fill="currentColor" d="M8 5v14l11-7z"/>';
+        playIcon.setAttribute('viewBox', '0 0 24 24');
+        
+        const pauseIcon = document.createElement('svg');
+        pauseIcon.className = 'w-5 h-5 text-white hidden';
+        pauseIcon.innerHTML = '<path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+        pauseIcon.setAttribute('viewBox', '0 0 24 24');
+        
+        playBtn.appendChild(playIcon);
+        playBtn.appendChild(pauseIcon);
+        
+        const waveform = document.createElement('div');
+        waveform.className = 'flex-1 flex items-center space-x-1';
+        
+        // Create simple waveform visualization
+        for (let i = 0; i < 20; i++) {
+          const bar = document.createElement('div');
+          bar.className = 'w-1 bg-gray-400 rounded-full';
+          bar.style.height = `${Math.random() * 20 + 8}px`;
+          waveform.appendChild(bar);
+        }
+        
+        const duration = document.createElement('div');
+        duration.className = 'text-sm text-gray-600 font-mono';
+        duration.textContent = '0:00';
+        
         const audio = document.createElement('audio');
-        audio.controls = true;
         audio.src = fileData;
-        bubble.appendChild(audio);
+        audio.preload = 'metadata';
+        
+        let isPlaying = false;
+        
+        audio.addEventListener('loadedmetadata', () => {
+          const mins = Math.floor(audio.duration / 60);
+          const secs = Math.floor(audio.duration % 60);
+          duration.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        });
+        
+        audio.addEventListener('timeupdate', () => {
+          const mins = Math.floor(audio.currentTime / 60);
+          const secs = Math.floor(audio.currentTime % 60);
+          duration.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+          
+          // Update waveform progress
+          const progress = audio.currentTime / audio.duration;
+          const bars = waveform.querySelectorAll('div');
+          bars.forEach((bar, index) => {
+            if (index / bars.length <= progress) {
+              bar.className = bar.className.replace('bg-gray-400', 'bg-green-500');
+            } else {
+              bar.className = bar.className.replace('bg-green-500', 'bg-gray-400');
+            }
+          });
+        });
+        
+        audio.addEventListener('ended', () => {
+          isPlaying = false;
+          playIcon.classList.remove('hidden');
+          pauseIcon.classList.add('hidden');
+          // Reset waveform
+          const bars = waveform.querySelectorAll('div');
+          bars.forEach(bar => {
+            bar.className = bar.className.replace('bg-green-500', 'bg-gray-400');
+          });
+        });
+        
+        playBtn.onclick = () => {
+          if (isPlaying) {
+            audio.pause();
+            isPlaying = false;
+            playIcon.classList.remove('hidden');
+            pauseIcon.classList.add('hidden');
+          } else {
+            audio.play();
+            isPlaying = true;
+            playIcon.classList.add('hidden');
+            pauseIcon.classList.remove('hidden');
+          }
+        };
+        
+        audioContainer.appendChild(playBtn);
+        audioContainer.appendChild(waveform);
+        audioContainer.appendChild(duration);
+        bubble.appendChild(audioContainer);
       } else {
+        const fileContainer = document.createElement('div');
+        fileContainer.className = 'flex items-center space-x-3 p-2';
+        
+        const fileIcon = document.createElement('div');
+        fileIcon.className = 'w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center';
+        fileIcon.innerHTML = `<svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" /></svg>`;
+        
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'flex-1';
+        const fileNameDiv = document.createElement('div');
+        fileNameDiv.className = 'text-sm font-medium text-gray-800';
+        fileNameDiv.textContent = fileName;
+        const fileSizeDiv = document.createElement('div');
+        fileSizeDiv.className = 'text-xs text-gray-600';
+        fileSizeDiv.textContent = 'Document';
+        
+        fileInfo.appendChild(fileNameDiv);
+        fileInfo.appendChild(fileSizeDiv);
+        
         const link = document.createElement('a');
         link.href = fileData;
         link.download = fileName;
-        link.textContent = `Download ${fileName}`;
-        link.className = 'underline text-blue-600';
+        link.className = 'text-blue-600 hover:text-blue-800';
+        
+        fileContainer.appendChild(fileIcon);
+        fileContainer.appendChild(fileInfo);
+        link.appendChild(fileContainer);
         bubble.appendChild(link);
       }
 
+      const timeDiv = document.createElement('div');
+      timeDiv.className = `text-xs mt-1 flex items-center justify-end ${
+        isSelf ? 'text-gray-600' : 'text-gray-500'
+      }`;
+      
       if (timestamp) {
-        const timeDiv = document.createElement('div');
-        timeDiv.className = 'text-xs text-gray-500 mt-1 text-right';
         timeDiv.textContent = timestamp;
-        bubble.appendChild(timeDiv);
+      } else {
+        timeDiv.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
 
+      if (isSelf) {
+        const statusIcon = document.createElement('span');
+        statusIcon.className = 'ml-1 text-blue-500';
+        statusIcon.innerHTML = '✓✓';
+        timeDiv.appendChild(statusIcon);
+      }
+
+      bubble.appendChild(timeDiv);
       container.appendChild(bubble);
       chatDiv.appendChild(container);
       chatDiv.scrollTop = chatDiv.scrollHeight;
     }
 
     function showSection(section) {
-      [roomSection, connectingSection, chatSection].forEach(s => s.classList.add('hidden'));
+      [roomSection, connectingSection, chatSection, callSection].forEach(s => s.classList.add('hidden'));
       section.classList.remove('hidden');
     }
 
+    function updateSendButton() {
+      const hasText = messageInput.value.trim();
+      if (hasText) {
+        micIcon.classList.add('hidden');
+        sendIcon.classList.remove('hidden');
+        stopIcon.classList.add('hidden');
+      } else if (isRecording) {
+        micIcon.classList.add('hidden');
+        sendIcon.classList.add('hidden');
+        stopIcon.classList.remove('hidden');
+      } else {
+        micIcon.classList.remove('hidden');
+        sendIcon.classList.add('hidden');
+        stopIcon.classList.add('hidden');
+      }
+    }
+
+    function updateStatus(text) {
+      statusText.textContent = text;
+    }
+
+    function startCallTimer() {
+      callStartTime = Date.now();
+      callTimer = setInterval(() => {
+        const elapsed = Date.now() - callStartTime;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (currentCallType === 'video') {
+          callTimerDisplay.textContent = timeString;
+        } else {
+          audioCallTimer.textContent = timeString;
+        }
+      }, 1000);
+    }
+
+    function stopCallTimer() {
+      if (callTimer) {
+        clearInterval(callTimer);
+        callTimer = null;
+      }
+    }
+
+    function animateAudioVisualizer() {
+      const bars = document.querySelectorAll('.audio-bar');
+      bars.forEach(bar => {
+        const height = Math.random() * 25 + 5;
+        bar.style.height = `${height}px`;
+      });
+    }
+
+    function startCall(type) {
+      if (!conn || !conn.open) return;
+      
+      currentCallType = type;
+      const constraints = type === 'video' 
+        ? { video: true, audio: true }
+        : { video: false, audio: true };
+
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+          localStream = stream;
+          
+          if (type === 'video') {
+            localVideo.srcObject = stream;
+            showSection(callSection);
+            videoCallContainer.classList.remove('hidden');
+            audioCallContainer.classList.add('hidden');
+          } else {
+            showSection(callSection);
+            videoCallContainer.classList.add('hidden');
+            audioCallContainer.classList.remove('hidden');
+            // Start audio visualizer animation
+            setInterval(animateAudioVisualizer, 150);
+          }
+          
+          call = peer.call(conn.peer, stream);
+          
+          call.on('stream', remoteStream => {
+            if (type === 'video') {
+              remoteVideo.srcObject = remoteStream;
+            }
+            startCallTimer();
+          });
+          
+          call.on('close', endCall);
+          
+          // Send call notification to other peer
+          conn.send({
+            type: 'call_request',
+            callType: type
+          });
+        })
+        .catch(err => {
+          alert(`Failed to access ${type === 'video' ? 'camera/microphone' : 'microphone'}`);
+          console.error(err);
+        });
+    }
+
+    function answerCall(incomingCall, type) {
+      call = incomingCall;
+      currentCallType = type;
+      
+      const constraints = type === 'video' 
+        ? { video: true, audio: true }
+        : { video: false, audio: true };
+
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+          localStream = stream;
+          
+          if (type === 'video') {
+            localVideo.srcObject = stream;
+            showSection(callSection);
+            videoCallContainer.classList.remove('hidden');
+            audioCallContainer.classList.add('hidden');
+          } else {
+            showSection(callSection);
+            videoCallContainer.classList.add('hidden');
+            audioCallContainer.classList.remove('hidden');
+            setInterval(animateAudioVisualizer, 150);
+          }
+          
+          call.answer(stream);
+          
+          call.on('stream', remoteStream => {
+            if (type === 'video') {
+              remoteVideo.srcObject = remoteStream;
+            }
+            startCallTimer();
+          });
+          
+          call.on('close', endCall);
+        })
+        .catch(err => {
+          alert(`Failed to access ${type === 'video' ? 'camera/microphone' : 'microphone'}`);
+          call.close();
+        });
+    }
+
+    function endCall() {
+      stopCallTimer();
+      
+      if (call) {
+        call.close();
+        call = null;
+      }
+      
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      
+      localVideo.srcObject = null;
+      remoteVideo.srcObject = null;
+      
+      isMuted = false;
+      isVideoOff = false;
+      currentCallType = null;
+      
+      updateMuteButton();
+      updateVideoButton();
+      
+      showSection(chatSection);
+      
+      // Send call end notification
+      if (conn && conn.open) {
+        conn.send({ type: 'call_end' });
+      }
+    }
+
+    function toggleMute() {
+      if (!localStream) return;
+      
+      isMuted = !isMuted;
+      localStream.getAudioTracks().forEach(track => {
+        track.enabled = !isMuted;
+      });
+      
+      updateMuteButton();
+    }
+
+    function updateMuteButton() {
+      const muteIcon = document.getElementById('muteIcon') || document.getElementById('audioMuteIcon');
+      const unmuteIcon = document.getElementById('unmuteIcon') || document.getElementById('audioUnmuteIcon');
+      const button = currentCallType === 'video' ? muteBtn : audioMuteBtn;
+      
+      if (isMuted) {
+        muteIcon.classList.add('hidden');
+        unmuteIcon.classList.remove('hidden');
+        button.classList.add('active');
+      } else {
+        muteIcon.classList.remove('hidden');
+        unmuteIcon.classList.add('hidden');
+        button.classList.remove('active');
+      }
+    }
+
+    function toggleVideo() {
+      if (!localStream || currentCallType !== 'video') return;
+      
+      isVideoOff = !isVideoOff;
+      localStream.getVideoTracks().forEach(track => {
+        track.enabled = !isVideoOff;
+      });
+      
+      updateVideoButton();
+    }
+
+    function updateVideoButton() {
+      const videoIcon = document.getElementById('videoIcon');
+      const videoOffIcon = document.getElementById('videoOffIcon');
+      
+      if (isVideoOff) {
+        videoIcon.classList.add('hidden');
+        videoOffIcon.classList.remove('hidden');
+        videoBtn.classList.add('active');
+      } else {
+        videoIcon.classList.remove('hidden');
+        videoOffIcon.classList.add('hidden');
+        videoBtn.classList.remove('active');
+      }
+    }
+
     function reset() {
+      endCall();
       if (conn) conn.close();
       if (peer) peer.destroy();
       if (stream) stream.getTracks().forEach(track => track.stop());
@@ -217,50 +963,94 @@
       messageInput.value = '';
       messageInput.disabled = true;
       sendBtn.disabled = true;
-      sendBtn.innerHTML = '🎤';
       fileBtn.disabled = true;
       cameraBtn.disabled = true;
+      emojiBtn.disabled = true;
+      voiceCallBtn.disabled = true;
+      videoCallBtn.disabled = true;
+      updateSendButton();
       showSection(roomSection);
+      incomingCallModal.classList.add('hidden');
     }
 
     resetBtn.onclick = reset;
 
     hostBtn.onclick = () => {
       const room = roomInput.value.trim();
-      if (!room) return alert('Enter a room name');
+      if (!room) return alert('Enter a room code');
       reset();
       showSection(connectingSection);
 
       peer = new Peer(room);
-      peer.on('open', () => showSection(chatSection));
+      peer.on('open', () => {
+        showSection(chatSection);
+        updateStatus('Waiting for connection...');
+      });
       peer.on('connection', connection => {
         if (conn) { connection.close(); return; }
         conn = connection;
         setupConnection();
       });
-      peer.on('error', err => { alert(err); reset(); });
+      peer.on('call', incomingCall => {
+        // Don't auto-answer, wait for user to accept
+        handleIncomingCall(incomingCall);
+      });
+      peer.on('error', err => { 
+        alert('Room might already exist or connection failed'); 
+        reset(); 
+      });
     };
 
     joinBtn.onclick = () => {
       const room = roomInput.value.trim();
-      if (!room) return alert('Enter a room name');
+      if (!room) return alert('Enter a room code');
       reset();
       showSection(connectingSection);
 
       peer = new Peer();
       peer.on('open', () => {
         conn = peer.connect(room);
-        conn.on('open', () => { showSection(chatSection); setupConnection(); });
-        conn.on('error', err => { alert(err); reset(); });
+        conn.on('open', () => { 
+          showSection(chatSection); 
+          setupConnection(); 
+        });
+        conn.on('error', err => { 
+          alert('Room not found or connection failed'); 
+          reset(); 
+        });
       });
-      peer.on('error', err => { alert(err); reset(); });
+      peer.on('call', incomingCall => {
+        handleIncomingCall(incomingCall);
+      });
+      peer.on('error', err => { 
+        alert('Connection failed'); 
+        reset(); 
+      });
     };
+
+    function handleIncomingCall(incomingCall) {
+      // Store the incoming call for later use
+      window.pendingCall = incomingCall;
+      // The call type will be determined from the call_request message
+    }
 
     function setupConnection() {
       messageInput.disabled = false;
       sendBtn.disabled = false;
       fileBtn.disabled = false;
       cameraBtn.disabled = false;
+      emojiBtn.disabled = false;
+      voiceCallBtn.disabled = false;
+      videoCallBtn.disabled = false;
+      updateStatus('Online');
+
+      // Update button colors when enabled
+      fileBtn.classList.remove('bg-gray-400', 'hover:bg-gray-500');
+      fileBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+      cameraBtn.classList.remove('bg-gray-400', 'hover:bg-gray-500');
+      cameraBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+      voiceCallBtn.classList.remove('opacity-50');
+      videoCallBtn.classList.remove('opacity-50');
 
       conn.on('data', data => {
         if (data.type === 'message') {
@@ -268,19 +1058,57 @@
           appendMessage(decryptedMsg, false, data.timestamp);
         } else if (data.type === 'file') {
           appendFile(data.fileData, data.fileName, data.fileType, false, data.timestamp);
+        } else if (data.type === 'call_request') {
+          // Show incoming call modal
+          callTypeText.textContent = data.callType === 'video' ? 'Incoming Video Call' : 'Incoming Voice Call';
+          incomingCallModal.classList.remove('hidden');
+          window.pendingCallType = data.callType;
+        } else if (data.type === 'call_end') {
+          endCall();
         }
       });
+      
       conn.on('close', () => {
-        alert('Disconnected');
-        if (stream) stream.getTracks().forEach(track => track.stop());
-        reset();
+        updateStatus('Disconnected');
+        setTimeout(() => {
+          alert('Connection lost');
+          reset();
+        }, 1000);
       });
     }
 
-    messageInput.addEventListener('input', () => {
-      const msg = messageInput.value.trim();
-      sendBtn.innerHTML = msg ? '➤' : '🎤';
-    });
+    // Call button event listeners
+    voiceCallBtn.onclick = () => startCall('audio');
+    videoCallBtn.onclick = () => startCall('video');
+
+    // Incoming call modal event listeners
+    acceptCall.onclick = () => {
+      incomingCallModal.classList.add('hidden');
+      if (window.pendingCall && window.pendingCallType) {
+        answerCall(window.pendingCall, window.pendingCallType);
+      }
+    };
+
+    declineCall.onclick = () => {
+      incomingCallModal.classList.add('hidden');
+      if (window.pendingCall) {
+        window.pendingCall.close();
+      }
+      if (conn && conn.open) {
+        conn.send({ type: 'call_end' });
+      }
+    };
+
+    // Video call controls
+    muteBtn.onclick = toggleMute;
+    videoBtn.onclick = toggleVideo;
+    endCallBtn.onclick = endCall;
+
+    // Audio call controls
+    audioMuteBtn.onclick = toggleMute;
+    endAudioCallBtn.onclick = endCall;
+
+    messageInput.addEventListener('input', updateSendButton);
 
     sendBtn.onclick = () => {
       const msg = messageInput.value.trim();
@@ -290,9 +1118,9 @@
         const encryptedMsg = encrypt(msg);
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         conn.send({ type: 'message', text: encryptedMsg, timestamp });
-        appendMessage(msg, true, timestamp); // Display original message for sender
+        appendMessage(msg, true, timestamp);
         messageInput.value = '';
-        sendBtn.innerHTML = '🎤';
+        updateSendButton();
       } else if (!isRecording) {
         navigator.mediaDevices.getUserMedia({ audio: true })
           .then(s => {
@@ -316,7 +1144,7 @@
             };
             mediaRecorder.start();
             isRecording = true;
-            sendBtn.innerHTML = '⏹';
+            updateSendButton();
           })
           .catch(err => {
             alert('Microphone permission denied');
@@ -324,7 +1152,7 @@
       } else {
         mediaRecorder.stop();
         isRecording = false;
-        sendBtn.innerHTML = '🎤';
+        updateSendButton();
       }
     };
 
@@ -350,24 +1178,6 @@
       fileInput.value = '';
     };
 
-    cameraBtn.onclick = () => cameraInput.click();
-
-    cameraInput.onchange = () => {
-      const file = cameraInput.files[0];
-      if (!file || !conn || !conn.open) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        const fileData = e.target.result;
-        const fileType = file.type;
-        const fileName = file.name;
-        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        conn.send({ type: 'file', fileData, fileName, fileType, timestamp });
-        appendFile(fileData, fileName, fileType, true, timestamp);
-      };
-      reader.readAsDataURL(file);
-      cameraInput.value = '';
-    };
-
     // Image modal functionality
     chatDiv.addEventListener('click', e => {
       if (e.target.classList.contains('photo-preview')) {
@@ -385,6 +1195,129 @@
         imageModal.classList.add('hidden');
       }
     });
+
+    // Emoji button functionality (placeholder)
+    emojiBtn.onclick = () => {
+      // Simple emoji insertion - you could expand this with an emoji picker
+      const emojis = ['😊', '😂', '❤️', '👍', '😢', '😮', '😡', '👋'];
+      const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+      messageInput.value += randomEmoji;
+      messageInput.focus();
+      updateSendButton();
+    };
+
+    // Auto-resize message input and focus management
+    messageInput.addEventListener('focus', () => {
+      setTimeout(() => {
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      }, 100);
+    });
+
+    // Generate room code suggestion
+    function generateRoomCode() {
+      return Math.random().toString(36).substr(2, 8).toUpperCase();
+    }
+
+    // Auto-suggest room code on page load
+    roomInput.placeholder = `Enter room code (e.g., ${generateRoomCode()})`;
+
+    // Keyboard shortcuts for call controls
+    document.addEventListener('keydown', (e) => {
+      if (call && (currentCallType === 'video' || currentCallType === 'audio')) {
+        switch(e.code) {
+          case 'KeyM':
+            e.preventDefault();
+            toggleMute();
+            break;
+          case 'KeyV':
+            if (currentCallType === 'video') {
+              e.preventDefault();
+              toggleVideo();
+            }
+            break;
+          case 'Escape':
+            e.preventDefault();
+            endCall();
+            break;
+        }
+      }
+    });
+
+    // Handle page visibility changes to pause/resume calls
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && call) {
+        // Optionally pause video when tab is not visible
+        if (currentCallType === 'video' && localStream) {
+          localStream.getVideoTracks().forEach(track => {
+            track.enabled = false;
+          });
+        }
+      } else if (!document.hidden && call && currentCallType === 'video' && !isVideoOff) {
+        // Resume video when tab becomes visible
+        if (localStream) {
+          localStream.getVideoTracks().forEach(track => {
+            track.enabled = true;
+          });
+        }
+      }
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (call) {
+        call.close();
+      }
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+      if (peer) {
+        peer.destroy();
+      }
+    });
+
+    // Handle mobile orientation changes
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        if (currentCallType === 'video') {
+          // Adjust video layout if needed
+          const isLandscape = window.orientation === 90 || window.orientation === -90;
+          if (isLandscape) {
+            localVideo.style.width = '100px';
+            localVideo.style.height = '75px';
+          } else {
+            localVideo.style.width = '80px';
+            localVideo.style.height = '60px';
+          }
+        }
+      }, 500);
+    });
+
+    // Add connection quality indicator
+    function checkConnectionQuality() {
+      if (call && call.peerConnection) {
+        call.peerConnection.getStats().then(stats => {
+          stats.forEach(report => {
+            if (report.type === 'inbound-rtp' && report.mediaType === 'video') {
+              // You can use these stats to show connection quality
+              // For now, we'll just log them
+              console.log('Video quality stats:', {
+                packetsLost: report.packetsLost,
+                bytesReceived: report.bytesReceived,
+                framesDecoded: report.framesDecoded
+              });
+            }
+          });
+        });
+      }
+    }
+
+    // Check connection quality every 5 seconds during calls
+    setInterval(() => {
+      if (call) {
+        checkConnectionQuality();
+      }
+    }, 5000);
+
   </script>
 </body>
 </html>
